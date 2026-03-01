@@ -1,0 +1,141 @@
+package ASimulatorSystem;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.sql.*;
+
+// Lớp Đổi Mã PIN
+public class Pin extends JFrame implements ActionListener{
+    
+    JPasswordField txtPinMoi, txtNhapLaiPin;
+    JButton btnDoiPin, btnQuayLai;                               
+    JLabel lblTieuDe, lblPinMoi, lblNhapLaiPin;
+    String maPinCu;
+
+    // Constructor nhận PIN hiện tại
+    Pin(String pin){
+
+        this.maPinCu = pin;
+
+        // Load hình nền ATM
+        ImageIcon iconGoc = new ImageIcon(ClassLoader.getSystemResource("ASimulatorSystem/icons/atm.jpg"));
+        Image hinhScale = iconGoc.getImage().getScaledInstance(1000, 1180, Image.SCALE_DEFAULT);
+        ImageIcon iconMoi = new ImageIcon(hinhScale);
+        JLabel lblHinhNen = new JLabel(iconMoi);
+        lblHinhNen.setBounds(0, 0, 960, 1080);
+        add(lblHinhNen);
+        
+        // Tiêu đề
+        lblTieuDe = new JLabel("THAY ĐỔI MÃ PIN");
+        lblTieuDe.setFont(new Font("System", Font.BOLD, 16));
+        lblTieuDe.setForeground(Color.WHITE);
+        
+        // Nhãn PIN mới
+        lblPinMoi = new JLabel("PIN mới:");
+        lblPinMoi.setFont(new Font("System", Font.BOLD, 16));
+        lblPinMoi.setForeground(Color.WHITE);
+        
+        // Nhãn nhập lại PIN
+        lblNhapLaiPin = new JLabel("Nhập lại PIN mới:");
+        lblNhapLaiPin.setFont(new Font("System", Font.BOLD, 16));
+        lblNhapLaiPin.setForeground(Color.WHITE);
+        
+        // Ô nhập PIN
+        txtPinMoi = new JPasswordField();
+        txtPinMoi.setFont(new Font("Raleway", Font.BOLD, 25));
+        
+        txtNhapLaiPin = new JPasswordField();
+        txtNhapLaiPin.setFont(new Font("Raleway", Font.BOLD, 25));
+        
+        // Nút chức năng
+        btnDoiPin = new JButton("ĐỔI PIN");
+        btnQuayLai = new JButton("QUAY LẠI");
+        
+        btnDoiPin.addActionListener(this);
+        btnQuayLai.addActionListener(this);
+        
+        setLayout(null);
+        
+        lblTieuDe.setBounds(280,330,800,35);
+        lblHinhNen.add(lblTieuDe);
+        
+        lblPinMoi.setBounds(180,390,150,35);
+        lblHinhNen.add(lblPinMoi);
+        
+        lblNhapLaiPin.setBounds(180,440,200,35);
+        lblHinhNen.add(lblNhapLaiPin);
+        
+        txtPinMoi.setBounds(350,390,180,25);
+        lblHinhNen.add(txtPinMoi);
+        
+        txtNhapLaiPin.setBounds(350,440,180,25);
+        lblHinhNen.add(txtNhapLaiPin);
+        
+        btnDoiPin.setBounds(390,588,150,35);
+        lblHinhNen.add(btnDoiPin);
+        
+        btnQuayLai.setBounds(390,633,150,35);
+        lblHinhNen.add(btnQuayLai);
+        
+        setSize(960,1080);
+        setLocation(500,0);
+        setUndecorated(true);
+        setVisible(true);
+    }
+    
+    // Xử lý sự kiện khi nhấn nút
+    public void actionPerformed(ActionEvent ae){
+        try{        
+            String pinMoi = txtPinMoi.getText();
+            String nhapLaiPin = txtNhapLaiPin.getText();
+            
+            // Kiểm tra PIN có trùng nhau không
+            if(!pinMoi.equals(nhapLaiPin)){
+                JOptionPane.showMessageDialog(null, "Hai mã PIN không khớp");
+                return;
+            }
+            
+            if(ae.getSource()==btnDoiPin){
+
+                if (txtPinMoi.getText().equals("")){
+                    JOptionPane.showMessageDialog(null, "Vui lòng nhập PIN mới");
+                    return;
+                }
+
+                if (txtNhapLaiPin.getText().equals("")){
+                    JOptionPane.showMessageDialog(null, "Vui lòng nhập lại PIN mới");
+                    return;
+                }
+                
+                Conn ketNoi = new Conn();
+
+                // Cập nhật PIN ở các bảng liên quan
+                String q1 = "update bank set pin = '"+nhapLaiPin+"' where pin = '"+maPinCu+"' ";
+                String q2 = "update login set pin = '"+nhapLaiPin+"' where pin = '"+maPinCu+"' ";
+                String q3 = "update signup3 set pin = '"+nhapLaiPin+"' where pin = '"+maPinCu+"' ";
+
+                ketNoi.s.executeUpdate(q1);
+                ketNoi.s.executeUpdate(q2);
+                ketNoi.s.executeUpdate(q3);
+
+                JOptionPane.showMessageDialog(null, "Đổi PIN thành công");
+
+                setVisible(false);
+                new Transactions(nhapLaiPin).setVisible(true);
+            
+            } 
+            else if(ae.getSource()==btnQuayLai){
+                new Transactions(maPinCu).setVisible(true);
+                setVisible(false);
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args){
+        new Pin("").setVisible(true);
+    }
+}

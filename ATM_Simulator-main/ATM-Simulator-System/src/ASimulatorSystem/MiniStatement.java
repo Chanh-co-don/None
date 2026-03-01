@@ -1,0 +1,104 @@
+package ASimulatorSystem;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.sql.*;
+
+// Lớp Sao Kê Giao Dịch (Mini Statement)
+public class MiniStatement extends JFrame implements ActionListener{
+ 
+    JButton btnThoat, btn2;
+    JLabel lblNoiDung;
+
+    MiniStatement(String maPin){
+
+        super("SAO KÊ GIAO DỊCH");
+        getContentPane().setBackground(Color.WHITE);
+        setSize(400,600);
+        setLocation(20,20);
+        
+        lblNoiDung = new JLabel();
+        add(lblNoiDung);
+        
+        // Tên ngân hàng
+        JLabel lblNganHang = new JLabel("NGÂN HÀNG ATM DEMO");
+        lblNganHang.setBounds(120, 20, 200, 20);
+        add(lblNganHang);
+        
+        // Hiển thị số thẻ (ẩn bớt thông tin)
+        JLabel lblSoThe = new JLabel();
+        lblSoThe.setBounds(20, 80, 300, 20);
+        add(lblSoThe);
+        
+        // Hiển thị tổng số dư
+        JLabel lblTongSoDu = new JLabel();
+        lblTongSoDu.setBounds(20, 400, 300, 20);
+        add(lblTongSoDu);
+        
+        try{
+            Conn ketNoi = new Conn();
+            ResultSet rs = ketNoi.s.executeQuery("select * from login where pin = '"+maPin+"'");
+            
+            while(rs.next()){
+                lblSoThe.setText("Số thẻ:    " 
+                        + rs.getString("cardno").substring(0, 4) 
+                        + "XXXXXXXX" 
+                        + rs.getString("cardno").substring(12));
+            }
+
+        }catch(Exception e){}
+
+        try{
+            int soDu = 0;
+            Conn ketNoi2  = new Conn();
+            ResultSet rs = ketNoi2.s.executeQuery("SELECT * FROM bank where pin = '"+maPin+"'");
+
+            while(rs.next()){
+
+                // Hiển thị từng giao dịch
+                lblNoiDung.setText(lblNoiDung.getText() 
+                    + "<html>" 
+                    + rs.getString("date") 
+                    + "&nbsp;&nbsp;&nbsp;&nbsp;" 
+                    + rs.getString("mode") 
+                    + "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" 
+                    + rs.getString("amount") 
+                    + " VNĐ"
+                    + "<br><br><html>");
+
+                // Tính số dư
+                if(rs.getString("mode").equals("Deposit")){
+                    soDu += Integer.parseInt(rs.getString("amount"));
+                }else{
+                    soDu -= Integer.parseInt(rs.getString("amount"));
+                }
+            }
+
+            lblTongSoDu.setText("Tổng số dư hiện tại: " + soDu + " VNĐ");
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        
+        setLayout(null);
+
+        // Nút thoát
+        btnThoat = new JButton("THOÁT");
+        add(btnThoat);
+        
+        btnThoat.addActionListener(this);
+        
+        lblNoiDung.setBounds(20, 140, 400, 200);
+        btnThoat.setBounds(20, 500, 100, 25);
+    }
+
+    // Xử lý khi nhấn nút
+    public void actionPerformed(ActionEvent ae){
+        this.setVisible(false);
+    }
+    
+    public static void main(String[] args){
+        new MiniStatement("").setVisible(true);
+    }
+}

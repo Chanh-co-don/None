@@ -1,0 +1,136 @@
+package ASimulatorSystem;
+
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+import java.sql.*;
+import java.util.Date;
+
+// Lớp Rút Tiền Nhanh
+public class FastCash extends JFrame implements ActionListener {
+
+    JLabel lblThongBao, lbl2;
+    JButton btn100, btn500, btn1000, btn2000, btn5000, btn10000, btnQuayLai, btn8;
+    JTextField txt1;
+    String maPin;
+
+    // Constructor nhận mã PIN
+    FastCash(String pin) {
+        this.maPin = pin;
+
+        // Load hình nền ATM
+        ImageIcon iconGoc = new ImageIcon(ClassLoader.getSystemResource("ASimulatorSystem/icons/atm.jpg"));
+        Image hinhScale = iconGoc.getImage().getScaledInstance(1000, 1180, Image.SCALE_DEFAULT);
+        ImageIcon iconMoi = new ImageIcon(hinhScale);
+        JLabel lblHinhNen = new JLabel(iconMoi);
+        lblHinhNen.setBounds(0, 0, 960, 1080);
+        add(lblHinhNen);
+
+        // Tiêu đề
+        lblThongBao = new JLabel("CHỌN SỐ TIỀN MUỐN RÚT");
+        lblThongBao.setForeground(Color.WHITE);
+        lblThongBao.setFont(new Font("System", Font.BOLD, 16));
+
+        // Các nút rút tiền nhanh
+        btn100 = new JButton("100 VNĐ");
+        btn500 = new JButton("500 VNĐ");
+        btn1000 = new JButton("1000 VNĐ");
+        btn2000 = new JButton("2000 VNĐ");
+        btn5000 = new JButton("5000 VNĐ");
+        btn10000 = new JButton("10000 VNĐ");
+        btnQuayLai = new JButton("QUAY LẠI");
+
+        setLayout(null);
+
+        lblThongBao.setBounds(235, 400, 700, 35);
+        lblHinhNen.add(lblThongBao);
+
+        btn100.setBounds(170, 499, 150, 35);
+        lblHinhNen.add(btn100);
+
+        btn500.setBounds(390, 499, 150, 35);
+        lblHinhNen.add(btn500);
+
+        btn1000.setBounds(170, 543, 150, 35);
+        lblHinhNen.add(btn1000);
+
+        btn2000.setBounds(390, 543, 150, 35);
+        lblHinhNen.add(btn2000);
+
+        btn5000.setBounds(170, 588, 150, 35);
+        lblHinhNen.add(btn5000);
+
+        btn10000.setBounds(390, 588, 150, 35);
+        lblHinhNen.add(btn10000);
+
+        btnQuayLai.setBounds(390, 633, 150, 35);
+        lblHinhNen.add(btnQuayLai);
+
+        // Thêm sự kiện
+        btn100.addActionListener(this);
+        btn500.addActionListener(this);
+        btn1000.addActionListener(this);
+        btn2000.addActionListener(this);
+        btn5000.addActionListener(this);
+        btn10000.addActionListener(this);
+        btnQuayLai.addActionListener(this);
+
+        setSize(960, 1080);
+        setLocation(500, 0);
+        setUndecorated(true);
+        setVisible(true);
+    }
+
+    // Xử lý sự kiện khi nhấn nút
+    public void actionPerformed(ActionEvent ae) {
+        try {
+            String soTien = ((JButton)ae.getSource()).getText().split(" ")[0];
+
+            Conn ketNoi = new Conn();
+            ResultSet rs = ketNoi.s.executeQuery("select * from bank where pin = '"+maPin+"'");
+
+            int soDu = 0;
+
+            // Tính số dư hiện tại
+            while (rs.next()) {
+                if (rs.getString("mode").equals("Deposit")) {
+                    soDu += Integer.parseInt(rs.getString("amount"));
+                } else {
+                    soDu -= Integer.parseInt(rs.getString("amount"));
+                }
+            }
+
+            // Kiểm tra số dư nếu không phải nút quay lại
+            if (ae.getSource() != btnQuayLai && soDu < Integer.parseInt(soTien)) {
+                JOptionPane.showMessageDialog(null, "Số dư không đủ");
+                return;
+            }
+
+            // Nếu nhấn quay lại
+            if (ae.getSource() == btnQuayLai) {
+                this.setVisible(false);
+                new Transactions(maPin).setVisible(true);
+            } 
+            else {
+                Date ngayGiaoDich = new Date();
+
+                // Thêm giao dịch rút tiền vào CSDL
+                ketNoi.s.executeUpdate(
+                    "insert into bank values('"+maPin+"', '"+ngayGiaoDich+"', 'Withdrawl', '"+soTien+"')"
+                );
+
+                JOptionPane.showMessageDialog(null, "Rút thành công " + soTien + " VNĐ");
+
+                setVisible(false);
+                new Transactions(maPin).setVisible(true);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void main(String[] args) {
+        new FastCash("").setVisible(true);
+    }
+}
